@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>صندوق کوچولو</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap">
+<style>
+  :root {
+    --page-bg: #DDE3DD;
+    --bg: #F1F4F1; --surface: #FFFFFF; --surface-alt: #E9EFE9;
+    --ink: #1B211E; --ink-soft: #647065; --border: #DBE2DB;
+    --emerald: #1F6F54; --emerald-soft: #E1EFE8;
+    --rust: #B0472F; --rust-soft: #F6E4DE;
+    --gold: #A17A1F; --gold-soft: #F3EAD3;
+    --emphasis-bg: #1B211E;
+  }
+  :root[data-theme="dark"] {
+    --page-bg: #0B0D0B;
+    --bg: #161C18; --surface: #1E2620; --surface-alt: #232B25;
+    --ink: #EDF2EE; --ink-soft: #93A69B; --border: #2C352E;
+    --emerald: #3FBF8F; --emerald-soft: #16332B;
+    --rust: #F0856A; --rust-soft: #3A231C;
+    --gold: #E4B75B; --gold-soft: #362B14;
+    --emphasis-bg: #0E3327;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--page-bg); }
+  body {
+    font-family: 'Vazirmatn', Tahoma, Arial, sans-serif;
+    display: flex; justify-content: center; min-height: 100vh; padding: 16px;
+    transition: background 0.2s ease;
+  }
+  .app-shell {
+    background: var(--bg); color: var(--ink);
+    width: 100%; max-width: 460px;
+    display: flex; flex-direction: column;
+    border-radius: 18px; overflow: hidden; border: 1px solid var(--border);
+    min-height: calc(100vh - 32px);
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  .app-header {
+    display: flex; align-items: center; gap: 8px;
+    padding: 16px 18px; background: var(--emphasis-bg); color: #fff;
+    font-size: 17px; font-weight: 700;
+  }
+  .theme-toggle-btn {
+    margin-inline-start: auto; background: rgba(255,255,255,0.14); border: none;
+    color: #fff; border-radius: 999px; width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;
+  }
+  .theme-toggle-btn svg { width: 16px; height: 16px; }
+  .app-content { flex: 1; overflow-y: auto; padding: 16px; padding-bottom: 90px; }
+  .bottom-nav {
+    display: flex; border-top: 1px solid var(--border); background: var(--surface);
+    position: sticky; bottom: 0;
+  }
+  .nav-btn {
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+    padding: 10px 0 12px; background: none; border: none; font-family: inherit;
+    font-size: 11px; color: var(--ink-soft); cursor: pointer;
+  }
+  .nav-btn.active { color: var(--emerald); font-weight: 600; }
+  .nav-btn svg { width: 20px; height: 20px; }
+
+  .tab-pane { display: flex; flex-direction: column; gap: 16px; }
+  .section-title { font-size: 14px; font-weight: 700; margin: 4px 0 -4px; color: var(--ink-soft); }
+
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 14px; display: flex; flex-direction: column; gap: 4px;
+    border-inline-start: 4px solid var(--ink);
+  }
+  .stat-card.tone-emerald { border-inline-start-color: var(--emerald); }
+  .stat-card.tone-rust { border-inline-start-color: var(--rust); }
+  .stat-card.tone-gold { border-inline-start-color: var(--gold); }
+  .stat-card.tone-ink { border-inline-start-color: var(--ink); }
+  .stat-label { font-size: 12px; color: var(--ink-soft); }
+  .stat-value { font-size: 19px; font-weight: 800; }
+  .stat-unit { font-size: 11px; color: var(--ink-soft); }
+
+  .fund-balance {
+    background: var(--ink); color: #fff; border-radius: 14px; padding: 14px 16px;
+    display: flex; justify-content: space-between; align-items: center; font-size: 13px;
+  }
+  .fund-balance strong { font-size: 17px; }
+
+  .member-list, .settlement-list { display: flex; flex-direction: column; gap: 10px; }
+  .member-card, .settlement-row {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px;
+  }
+  .member-card-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .member-name { font-weight: 700; font-size: 14px; }
+  .avatar {
+    width: 32px; height: 32px; border-radius: 50%; color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 13px; flex-shrink: 0;
+  }
+  .member-metrics { display: flex; justify-content: space-between; gap: 6px; }
+  .member-metrics div, .settlement-grid div { display: flex; flex-direction: column; gap: 2px; font-size: 12px; }
+  .member-metrics span, .settlement-grid span { color: var(--ink-soft); }
+  .member-metrics strong, .settlement-grid strong { font-size: 14px; }
+  .settlement-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .settlement-status { grid-column: span 2; border-top: 1px dashed var(--border); padding-top: 8px; margin-top: 2px; }
+  .settlement-status strong { font-size: 16px; }
+
+  .add-btn {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    background: var(--emerald); color: #fff; border: none; padding: 12px;
+    border-radius: 12px; font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer; width: 100%;
+  }
+  .tx-form {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 14px; display: flex; flex-direction: column; gap: 10px;
+  }
+  .tx-form label { font-size: 12px; color: var(--ink-soft); margin-top: 4px; }
+  .type-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+  .type-chip {
+    border: 1px solid var(--border); background: var(--surface-alt); border-radius: 999px;
+    padding: 6px 12px; font-size: 12px; font-family: inherit; cursor: pointer; color: var(--ink-soft);
+  }
+  .type-chip.selected { font-weight: 700; }
+  .type-hint { font-size: 12px; color: var(--ink-soft); margin: 0; }
+  .plain-input, .plain-select {
+    border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px;
+    font-family: inherit; font-size: 14px; background: var(--surface); color: var(--ink); width: 100%;
+  }
+  .date-select { display: flex; gap: 6px; }
+  .date-select select {
+    border: 1px solid var(--border); border-radius: 10px; padding: 8px 6px;
+    font-family: inherit; font-size: 13px; background: var(--surface); color: var(--ink); flex: 1;
+  }
+  .status-toggle { display: flex; gap: 6px; }
+  .status-toggle button {
+    flex: 1; padding: 8px; border-radius: 10px; border: 1px solid var(--border);
+    background: var(--surface-alt); font-family: inherit; font-size: 12px; cursor: pointer; color: var(--ink-soft);
+  }
+  .status-toggle button.selected { background: var(--gold-soft); color: var(--gold); border-color: var(--gold); font-weight: 700; }
+  .submit-btn {
+    margin-top: 6px; background: var(--emerald); color: #fff; border: none; padding: 11px;
+    border-radius: 10px; font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer;
+  }
+  .submit-btn.compact { padding: 10px 14px; white-space: nowrap; display: flex; align-items: center; gap: 4px; }
+
+  .tx-list { display: flex; flex-direction: column; gap: 8px; }
+  .tx-row {
+    position: relative; display: flex; align-items: center; gap: 10px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px;
+    border-inline-start: 4px solid var(--ink);
+  }
+  .tx-tag { font-size: 10px; font-weight: 700; padding: 3px 7px; border-radius: 999px; white-space: nowrap; }
+  .tx-main { flex: 1; min-width: 0; }
+  .tx-desc { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tx-meta { font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
+  .tx-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+  .tx-amount { font-size: 13px; font-weight: 700; }
+  .status-pill {
+    display: flex; align-items: center; gap: 3px; font-size: 10px; border: none;
+    padding: 3px 7px; border-radius: 999px; cursor: pointer; font-family: inherit; font-weight: 600;
+  }
+  .status-pill.pending { background: var(--gold-soft); color: var(--gold); }
+  .status-pill.received { background: var(--emerald-soft); color: var(--emerald); }
+  .del-btn { border: none; background: none; color: var(--ink-soft); cursor: pointer; padding: 4px; flex-shrink: 0; }
+  .del-btn:hover { color: var(--rust); }
+  .row-actions { display: flex; flex-direction: column; gap: 5px; flex-shrink: 0; }
+  .edit-btn, .del-btn {
+    display: flex; align-items: center; gap: 4px; font-size: 11px; font-family: inherit; font-weight: 700;
+    border: none; border-radius: 999px; padding: 5px 9px; cursor: pointer; white-space: nowrap;
+  }
+  .edit-btn { background: var(--emerald-soft); color: var(--emerald); }
+  .del-btn { background: var(--rust-soft); color: var(--rust); }
+  .edit-btn svg, .del-btn svg { width: 13px; height: 13px; flex-shrink: 0; }
+  .edit-mode-banner {
+    font-size: 12px; color: var(--emerald); font-weight: 700;
+    background: var(--emerald-soft); padding: 8px 10px; border-radius: 8px;
+  }
+  .member-edit-row { display: flex; gap: 6px; align-items: center; flex: 1; min-width: 0; }
+  .member-edit-row input { flex: 1; min-width: 0; }
+  .member-edit-row .share-input { flex: 0 0 68px; min-width: 0; }
+  .icon-btn { border: none; border-radius: 8px; padding: 7px 8px; cursor: pointer; display: flex; align-items: center; flex-shrink: 0; }
+  .icon-btn.save { background: var(--emerald-soft); color: var(--emerald); }
+  .icon-btn.cancel { background: var(--surface-alt); color: var(--ink-soft); }
+  .confirm-box {
+    position: absolute; inset: 0; background: var(--surface);
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    border-radius: 12px; font-size: 12px;
+  }
+  .confirm-box button { border: 1px solid var(--border); background: var(--surface-alt); border-radius: 8px; padding: 5px 12px; font-family: inherit; font-size: 12px; cursor: pointer; }
+  .member-add-form { display: flex; gap: 8px; }
+  .member-add-form .plain-input { width: auto; flex: 1; min-width: 0; }
+  .member-add-form .submit-btn { flex-shrink: 0; }
+  .member-row { align-items: center; }
+  .form-error { color: var(--rust); font-size: 12px; background: var(--rust-soft); border-radius: 8px; padding: 8px 10px; margin: 0; }
+  .empty-state {
+    text-align: center; color: var(--ink-soft); font-size: 13px;
+    padding: 40px 20px; background: var(--surface); border: 1px dashed var(--border); border-radius: 14px;
+  }
+  .storage-note { font-size: 11px; color: var(--ink-soft); text-align: center; padding: 2px 4px 0; }
+  .app-header-title { display: flex; align-items: center; gap: 8px; }
+  .share-badge {
+    font-size: 10px; font-weight: 700; color: var(--emerald); background: var(--emerald-soft);
+    padding: 2px 7px; border-radius: 999px; white-space: nowrap; margin-inline-start: auto;
+  }
+  .percent-warning {
+    font-size: 12px; color: var(--rust); background: var(--rust-soft);
+    border-radius: 8px; padding: 8px 10px; margin: 0;
+  }
+  .share-input { max-width: 74px; flex: 0 0 74px; }
+  .member-add-form { flex-wrap: wrap; }
+  .member-add-form .share-input { flex: 0 0 74px; width: auto; }
+</style>
+</head>
+<body>
+<div class="app-shell" id="app"></div>
+
+<script>
+/* ---------------- Jalali calendar helpers ---------------- */
+const div_ = (a, b) => Math.floor(a / b);
+const mod_ = (a, b) => a - Math.floor(a / b) * b;
+
+function isLeapJalaliYear(jy) {
+  return ((((jy - (jy > 0 ? 474 : 473)) % 2820) + 474 + 38) * 682) % 2816 < 682;
+}
+function jalaliMonthLength(jy, jm) {
+  if (jm <= 6) return 31;
+  if (jm <= 11) return 30;
+  return isLeapJalaliYear(jy) ? 30 : 29;
+}
+function g2j(gy, gm, gd) {
+  const g_d_m = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
+  let jy = gy <= 1600 ? 0 : 979;
+  gy -= gy <= 1600 ? 621 : 1600;
+  const gy2 = gm > 2 ? gy + 1 : gy;
+  let days = 365 * gy + div_(gy2 + 3, 4) - div_(gy2 + 99, 100) + div_(gy2 + 399, 400) - 80 + gd + g_d_m[gm - 1];
+  jy += 33 * div_(days, 12053);
+  days = mod_(days, 12053);
+  jy += 4 * div_(days, 1461);
+  days = mod_(days, 1461);
+  if (days > 365) { jy += div_(days - 1, 365); days = mod_(days - 1, 365); }
+  let jm, jd;
+  if (days < 186) { jm = 1 + div_(days, 31); jd = 1 + mod_(days, 31); }
+  else { jm = 7 + div_(days - 186, 30); jd = 1 + mod_(days - 186, 30); }
+  return [jy, jm, jd];
+}
+function todayJalali() {
+  const d = new Date();
+  return g2j(d.getFullYear(), d.getMonth() + 1, d.getDate());
+}
+function jalaliKey(d) { return d[0] * 10000 + d[1] * 100 + d[2]; }
+const PERSIAN_MONTHS = ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
+function formatJalali(d) { return d[2] + ' ' + PERSIAN_MONTHS[d[1] - 1] + ' ' + d[0]; }
+function formatToman(n) {
+  const num = Math.round(n || 0);
+  const sign = num < 0 ? '−' : '';
+  return sign + Math.abs(num).toLocaleString('en-US');
+}
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function toEnglishDigits(str) {
+  const fa = '۰۱۲۳۴۵۶۷۸۹', ar = '٠١٢٣٤٥٦٧٨٩';
+  return String(str == null ? '' : str).replace(/[۰-۹]/g, (d) => fa.indexOf(d)).replace(/[٠-٩]/g, (d) => ar.indexOf(d));
+}
+function sanitizeAmount(str) {
+  return toEnglishDigits(str).replace(/[^0-9]/g, '');
+}
+function sanitizePercent(str) {
+  let clean = toEnglishDigits(str).replace(/[^0-9.]/g, '');
+  const firstDot = clean.indexOf('.');
+  if (firstDot !== -1) clean = clean.slice(0, firstDot + 1) + clean.slice(firstDot + 1).replace(/\./g, '');
+  return clean;
+}
+function clampPercent(n) {
+  n = Number(n);
+  if (isNaN(n)) return 0;
+  return Math.max(0, Math.min(100, Math.round(n * 100) / 100));
+}
+
+/* ---------------- Config ---------------- */
+const TYPES = {
+  income: { label: 'درآمد دریافتی', hint: 'پولی که واقعاً به دست تیم رسیده', color: '#1F6F54', bg: '#E1EFE8' },
+  expected_income: { label: 'مطالبات (درآمد آینده)', hint: 'پولی که قرار است در آینده دریافت شود', color: '#A17A1F', bg: '#F3EAD3' },
+  shared_expense: { label: 'خرج مشترک', hint: 'هزینه‌ای که از صندوق تیم پرداخت شده', color: '#B0472F', bg: '#F6E4DE' },
+  purchase: { label: 'خرید وسایل', hint: 'خرید وسیله یا تجهیزات برای تیم', color: '#B0472F', bg: '#F6E4DE' },
+  payment_other: { label: 'پرداخت به اشخاص دیگر', hint: 'پولی که به فردی خارج از تیم داده شده', color: '#B0472F', bg: '#F6E4DE' },
+  withdrawal: { label: 'برداشت شخصی', hint: 'برداشت یکی از اعضا از صندوق', color: '#1B211E', bg: '#E9EFE9' },
+};
+const AVATAR_COLORS = ['#1F6F54', '#B0472F', '#A98232', '#3B5F8A', '#7A4F9E', '#4C7A6B'];
+const ICONS = {
+  home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 3l9 6.5"/><path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10"/></svg>',
+  list: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></svg>',
+  users: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+  scale: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M3 7h18M6 7 3 14a3 3 0 0 0 6 0L6 7ZM18 7l-3 7a3 3 0 0 0 6 0l-3-7Z"/></svg>',
+  wallet: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>',
+  plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>',
+  x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>',
+  trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg>',
+  clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+  edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>',
+  sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>',
+  moon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>',
+};
+
+/* ---------------- State ---------------- */
+const STORAGE_KEY = 'sandogh-team-data-v1';
+let state = {
+  tab: 'dashboard',
+  members: [],
+  transactions: [],
+  showForm: false,
+  confirmDeleteId: null,
+  newMemberName: '',
+  newMemberShare: '',
+  formError: '',
+  memberError: '',
+  editingTxId: null,
+  editingMemberId: null,
+  editMemberName: '',
+  editMemberShare: '',
+  theme: 'light',
+  form: { type: 'income', amount: '', date: todayJalali(), desc: '', memberId: '', status: 'pending' },
+};
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      state.members = parsed.members || [];
+      state.transactions = parsed.transactions || [];
+      state.theme = parsed.theme === 'dark' ? 'dark' : 'light';
+    }
+  } catch (e) { /* ignore */ }
+  if (state.members.length && state.members.some((m) => typeof m.sharePercent !== 'number')) {
+    const eq = clampPercent(100 / state.members.length);
+    state.members.forEach((m) => { if (typeof m.sharePercent !== 'number') m.sharePercent = eq; });
+  }
+}
+function saveData() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ members: state.members, transactions: state.transactions, theme: state.theme }));
+  } catch (e) { /* ignore */ }
+}
+function applyTheme() {
+  document.documentElement.setAttribute('data-theme', state.theme === 'dark' ? 'dark' : 'light');
+}
+
+/* ---------------- Computations ---------------- */
+function computeSummary() {
+  const sum = (pred) => state.transactions.filter(pred).reduce((s, t) => s + Number(t.amount || 0), 0);
+  const totalIncome = sum((t) => t.type === 'income' || (t.type === 'expected_income' && t.status === 'received'));
+  const totalPending = sum((t) => t.type === 'expected_income' && t.status === 'pending');
+  const totalSharedExpense = sum((t) => t.type === 'shared_expense');
+  const totalPurchase = sum((t) => t.type === 'purchase');
+  const totalPaymentOther = sum((t) => t.type === 'payment_other');
+  const totalExpense = totalSharedExpense + totalPurchase + totalPaymentOther;
+  const totalWithdrawal = sum((t) => t.type === 'withdrawal');
+  const netProfit = totalIncome - totalExpense;
+  const fundBalance = netProfit - totalWithdrawal;
+  const totalSharePercent = state.members.reduce((s, m) => s + (m.sharePercent || 0), 0);
+  const perMember = state.members.map((m) => {
+    const withdrawal = sum((t) => t.type === 'withdrawal' && t.memberId === m.id);
+    const sharePercent = m.sharePercent || 0;
+    const profitShare = netProfit * (sharePercent / 100);
+    return { ...m, sharePercent, withdrawal, profitShare, balance: profitShare - withdrawal };
+  });
+  return { totalIncome, totalPending, totalExpense, netProfit, fundBalance, totalSharePercent, perMember };
+}
+
+/* ---------------- Rendering ---------------- */
+function avatarHtml(name, index) {
+  const color = AVATAR_COLORS[index % AVATAR_COLORS.length];
+  const initial = esc((name || '؟').trim().charAt(0) || '؟');
+  return `<div class="avatar" style="background:${color}">${initial}</div>`;
+}
+
+function renderDateSelect(date) {
+  const [jy, jm, jd] = date;
+  const maxDay = jalaliMonthLength(jy, jm);
+  const thisY = todayJalali()[0];
+  let days = '';
+  for (let d = 1; d <= maxDay; d++) days += `<option value="${d}" ${d === jd ? 'selected' : ''}>${d}</option>`;
+  let months = '';
+  PERSIAN_MONTHS.forEach((m, i) => { months += `<option value="${i + 1}" ${i + 1 === jm ? 'selected' : ''}>${m}</option>`; });
+  let years = '';
+  for (let y = thisY - 5; y <= thisY + 1; y++) years += `<option value="${y}" ${y === jy ? 'selected' : ''}>${y}</option>`;
+  return `
+    <div class="date-select">
+      <select data-field="date-day">${days}</select>
+      <select data-field="date-month">${months}</select>
+      <select data-field="date-year">${years}</select>
+    </div>`;
+}
+
+function renderDashboard(summary) {
+  if (state.members.length === 0) {
+    return `<div class="empty-state">برای شروع، اول اعضای تیم را از تب «اعضا» اضافه کنید.</div>`;
+  }
+  const cards = summary.perMember.map((m, i) => `
+    <div class="member-card">
+      <div class="member-card-top">
+        ${avatarHtml(m.name, i)}<span class="member-name">${esc(m.name)}</span>
+        <span class="share-badge">${m.sharePercent}%</span>
+      </div>
+      <div class="member-metrics">
+        <div><span>سهم از سود</span><strong>${formatToman(m.profitShare)}</strong></div>
+        <div><span>برداشت</span><strong>${formatToman(m.withdrawal)}</strong></div>
+        <div><span>${m.balance >= 0 ? 'بستانکار' : 'بدهکار'}</span>
+          <strong style="color:${m.balance >= 0 ? 'var(--emerald)' : 'var(--rust)'}">${formatToman(Math.abs(m.balance))}</strong>
+        </div>
+      </div>
+    </div>`).join('');
+  return `
+    <div class="tab-pane">
+      <div class="stat-grid">
+        <div class="stat-card tone-emerald"><span class="stat-label">مجموع درآمد</span><span class="stat-value">${formatToman(summary.totalIncome)}</span><span class="stat-unit">تومان</span></div>
+        <div class="stat-card tone-gold"><span class="stat-label">مطالبات (در انتظار)</span><span class="stat-value">${formatToman(summary.totalPending)}</span><span class="stat-unit">تومان</span></div>
+        <div class="stat-card tone-rust"><span class="stat-label">مجموع هزینه‌ها</span><span class="stat-value">${formatToman(summary.totalExpense)}</span><span class="stat-unit">تومان</span></div>
+        <div class="stat-card tone-ink"><span class="stat-label">سود خالص</span><span class="stat-value">${formatToman(summary.netProfit)}</span><span class="stat-unit">تومان</span></div>
+      </div>
+      <div class="fund-balance"><span>موجودی صندوق پس از برداشت‌ها</span><strong>${formatToman(summary.fundBalance)} تومان</strong></div>
+      ${Math.round(summary.totalSharePercent) !== 100 ? `<p class="percent-warning">⚠ مجموع درصد سهم اعضا ${summary.totalSharePercent}% است، نه ۱۰۰٪. از تب «اعضا» درصدها را اصلاح کنید.</p>` : ''}
+      <h3 class="section-title">وضعیت اعضا</h3>
+      <div class="member-list">${cards}</div>
+    </div>`;
+}
+
+function renderTransactionsTab() {
+  const f = state.form;
+  const typeChips = Object.entries(TYPES).map(([key, cfg]) => `
+    <button type="button" class="type-chip ${f.type === key ? 'selected' : ''}"
+      style="${f.type === key ? `background:${cfg.bg};color:${cfg.color};border-color:${cfg.color}` : ''}"
+      data-action="set-type" data-type="${key}">${cfg.label}</button>`).join('');
+
+  let memberBlock = '';
+  if (f.type === 'withdrawal') {
+    if (state.members.length === 0) {
+      memberBlock = `<label>عضو برداشت‌کننده</label><p class="type-hint">ابتدا از تب «اعضا» یک عضو اضافه کنید.</p>`;
+    } else {
+      const opts = state.members.map((m) => `<option value="${m.id}" ${f.memberId === m.id ? 'selected' : ''}>${esc(m.name)}</option>`).join('');
+      memberBlock = `<label>عضو برداشت‌کننده</label>
+        <select class="plain-select" data-field="memberId"><option value="">انتخاب کنید…</option>${opts}</select>`;
+    }
+  }
+
+  let statusBlock = '';
+  if (f.type === 'expected_income') {
+    statusBlock = `<label>وضعیت وصول</label>
+      <div class="status-toggle">
+        <button type="button" class="${f.status === 'pending' ? 'selected' : ''}" data-action="set-status" data-status="pending">در انتظار</button>
+        <button type="button" class="${f.status === 'received' ? 'selected' : ''}" data-action="set-status" data-status="received">دریافت شد</button>
+      </div>`;
+  }
+
+  const formHtml = state.showForm ? `
+    <form class="tx-form" id="tx-form">
+      ${state.editingTxId ? `<p class="edit-mode-banner">در حال ویرایش تراکنش</p>` : ''}
+      <label>نوع تراکنش</label>
+      <div class="type-grid">${typeChips}</div>
+      <p class="type-hint">${TYPES[f.type].hint}</p>
+      ${memberBlock}
+      ${statusBlock}
+      <label>مبلغ (تومان)</label>
+      <input type="text" inputmode="numeric" class="plain-input" data-field="amount" value="${esc(f.amount)}" placeholder="مثلاً 500000">
+      <label>تاریخ</label>
+      ${renderDateSelect(f.date)}
+      <label>توضیحات</label>
+      <input type="text" class="plain-input" data-field="desc" value="${esc(f.desc)}" placeholder="مثلاً بابت خرید لپ‌تاپ">
+      ${state.formError ? `<p class="form-error">${esc(state.formError)}</p>` : ''}
+      <button type="submit" class="submit-btn">${state.editingTxId ? 'ذخیره تغییرات' : 'ثبت تراکنش'}</button>
+    </form>` : '';
+
+  const sorted = [...state.transactions].sort((a, b) => jalaliKey(b.date) - jalaliKey(a.date));
+  const list = sorted.length === 0
+    ? `<div class="empty-state">هنوز تراکنشی ثبت نشده است.</div>`
+    : `<div class="tx-list">${sorted.map((t) => {
+        const cfg = TYPES[t.type];
+        const member = t.memberId ? state.members.find((m) => m.id === t.memberId) : null;
+        const statusPill = t.type === 'expected_income'
+          ? `<button class="status-pill ${t.status}" data-action="toggle-received" data-id="${t.id}">${t.status === 'pending' ? ICONS.clock + ' در انتظار' : ICONS.check + ' دریافت شد'}</button>`
+          : '';
+        const confirming = state.confirmDeleteId === t.id;
+        return `
+          <div class="tx-row" style="border-inline-start-color:${cfg.color}">
+            <div class="tx-tag" style="color:${cfg.color};background:${cfg.bg}">${cfg.label}</div>
+            <div class="tx-main">
+              <div class="tx-desc">${esc(t.desc) || '—'}</div>
+              <div class="tx-meta">${formatJalali(t.date)}${member ? ' · ' + esc(member.name) : ''}</div>
+            </div>
+            <div class="tx-right"><div class="tx-amount">${formatToman(t.amount)}</div>${statusPill}</div>
+            ${confirming
+              ? `<div class="confirm-box"><span>حذف شود؟</span><button data-action="remove-tx" data-id="${t.id}">بله</button><button data-action="cancel-delete">خیر</button></div>`
+              : `<div class="row-actions">
+                   <button class="edit-btn" data-action="edit-tx" data-id="${t.id}">${ICONS.edit}ویرایش</button>
+                   <button class="del-btn" data-action="confirm-delete-tx" data-id="${t.id}">${ICONS.trash}حذف</button>
+                 </div>`}
+          </div>`;
+      }).join('')}</div>`;
+
+  return `
+    <div class="tab-pane">
+      <button class="add-btn" data-action="toggle-form">${state.showForm ? ICONS.x : ICONS.plus} ${state.editingTxId ? 'انصراف از ویرایش' : (state.showForm ? 'بستن فرم' : 'ثبت تراکنش جدید')}</button>
+      ${formHtml}
+      ${list}
+    </div>`;
+}
+
+function renderMembersTab(summary) {
+  const list = state.members.length === 0
+    ? `<div class="empty-state">هنوز عضوی اضافه نشده است.</div>`
+    : `<div class="tx-list">${state.members.map((m, i) => {
+        const info = summary.perMember.find((x) => x.id === m.id);
+        const confirming = state.confirmDeleteId === m.id;
+        const editing = state.editingMemberId === m.id;
+        if (editing) {
+          return `
+          <div class="tx-row member-row" style="border-inline-start-color:var(--emerald)">
+            <div class="member-edit-row">
+              <input type="text" class="plain-input" id="edit-member-input" value="${esc(state.editMemberName)}" placeholder="نام">
+              <input type="text" inputmode="decimal" class="plain-input share-input" id="edit-member-share" value="${esc(state.editMemberShare)}" placeholder="٪">
+              <button type="button" class="icon-btn save" data-action="save-edit-member" data-id="${m.id}">${ICONS.check}</button>
+              <button type="button" class="icon-btn cancel" data-action="cancel-edit-member">${ICONS.x}</button>
+            </div>
+          </div>
+          ${state.memberError ? `<p class="form-error">${esc(state.memberError)}</p>` : ''}`;
+        }
+        return `
+          <div class="tx-row member-row" style="border-inline-start-color:var(--emerald)">
+            ${avatarHtml(m.name, i)}
+            <div class="tx-main">
+              <div class="tx-desc">${esc(m.name)} <span class="share-badge">${m.sharePercent || 0}%</span></div>
+              <div class="tx-meta">${info ? 'برداشت: ' + formatToman(info.withdrawal) + ' تومان' : ''}</div>
+            </div>
+            ${confirming
+              ? `<div class="confirm-box"><span>حذف شود؟</span><button data-action="remove-member" data-id="${m.id}">بله</button><button data-action="cancel-delete">خیر</button></div>`
+              : `<div class="row-actions">
+                   <button class="edit-btn" data-action="edit-member" data-id="${m.id}">${ICONS.edit}ویرایش</button>
+                   <button class="del-btn" data-action="confirm-delete-member" data-id="${m.id}">${ICONS.trash}حذف</button>
+                 </div>`}
+          </div>`;
+      }).join('')}</div>`;
+
+  const totalPercent = state.members.reduce((s, m) => s + (m.sharePercent || 0), 0);
+
+  return `
+    <div class="tab-pane">
+      <form class="member-add-form" id="member-form">
+        <input type="text" class="plain-input" id="new-member-input" placeholder="نام عضو جدید" value="${esc(state.newMemberName)}">
+        <input type="text" inputmode="decimal" class="plain-input share-input" id="new-member-share" placeholder="٪ سهم" value="${esc(state.newMemberShare)}">
+        <button type="submit" class="submit-btn compact">${ICONS.plus} افزودن</button>
+      </form>
+      ${(!state.editingMemberId && state.memberError) ? `<p class="form-error">${esc(state.memberError)}</p>` : ''}
+      ${state.members.length > 0 ? `<p class="${Math.round(totalPercent) === 100 ? 'type-hint' : 'percent-warning'}">مجموع درصد سهم‌ها: ${totalPercent}%${Math.round(totalPercent) === 100 ? '' : ' — با ۱۰۰٪ برابر نیست'}</p>` : ''}
+      ${list}
+    </div>`;
+}
+
+function renderSettlementTab(summary) {
+  if (summary.perMember.length === 0) return `<div class="empty-state">ابتدا اعضای تیم را اضافه کنید.</div>`;
+  const rows = summary.perMember.map((m, i) => `
+    <div class="settlement-row">
+      <div class="member-card-top">
+        ${avatarHtml(m.name, i)}<span class="member-name">${esc(m.name)}</span>
+        <span class="share-badge">${m.sharePercent}%</span>
+      </div>
+      <div class="settlement-grid">
+        <div><span>سهم سود</span><strong>${formatToman(m.profitShare)}</strong></div>
+        <div><span>برداشت</span><strong>${formatToman(m.withdrawal)}</strong></div>
+        <div class="settlement-status" style="color:${m.balance >= 0 ? 'var(--emerald)' : 'var(--rust)'}">
+          <span>${m.balance >= 0 ? 'بستانکار از تیم' : 'بدهکار به تیم'}</span>
+          <strong>${formatToman(Math.abs(m.balance))} تومان</strong>
+        </div>
+      </div>
+    </div>`).join('');
+  return `
+    <div class="tab-pane">
+      <div class="fund-balance"><span>سود خالص تیم</span><strong>${formatToman(summary.netProfit)} تومان</strong></div>
+      <p class="type-hint">سود بر اساس درصد سهم هر عضو تقسیم می‌شود.</p>
+      ${Math.round(summary.totalSharePercent) !== 100 ? `<p class="percent-warning">⚠ مجموع درصد سهم‌ها ${summary.totalSharePercent}% است، نه ۱۰۰٪.</p>` : ''}
+      <div class="settlement-list">${rows}</div>
+    </div>`;
+}
+
+function render() {
+  applyTheme();
+  const summary = computeSummary();
+  let content = '';
+  if (state.tab === 'dashboard') content = renderDashboard(summary);
+  else if (state.tab === 'transactions') content = renderTransactionsTab();
+  else if (state.tab === 'members') content = renderMembersTab(summary);
+  else if (state.tab === 'settlement') content = renderSettlementTab(summary);
+
+  const nav = [
+    ['dashboard', ICONS.home, 'داشبورد'],
+    ['transactions', ICONS.list, 'تراکنش‌ها'],
+    ['members', ICONS.users, 'اعضا'],
+    ['settlement', ICONS.scale, 'تسویه‌حساب'],
+  ].map(([key, icon, label]) => `
+    <button class="nav-btn ${state.tab === key ? 'active' : ''}" data-action="set-tab" data-tab="${key}">${icon}<span>${label}</span></button>`).join('');
+
+  document.getElementById('app').innerHTML = `
+    <header class="app-header">
+      <div class="app-header-title">${ICONS.wallet}<span>صندوق کوچولو</span></div>
+      <button class="theme-toggle-btn" data-action="toggle-theme" title="تغییر پوسته">${state.theme === 'dark' ? ICONS.sun : ICONS.moon}</button>
+    </header>
+    <main class="app-content">${content}</main>
+    <p class="storage-note" style="position:absolute;opacity:0"></p>
+    <nav class="bottom-nav">${nav}</nav>`;
+
+  attachHandlers();
+}
+
+/* ---------------- Event handling ---------------- */
+function attachHandlers() {
+  const app = document.getElementById('app');
+
+  app.querySelectorAll('[data-action]').forEach((el) => {
+    el.addEventListener('click', (e) => {
+      const action = el.dataset.action;
+      const id = el.dataset.id;
+      if (action === 'set-tab') {
+        state.tab = el.dataset.tab; state.confirmDeleteId = null; state.formError = ''; state.memberError = '';
+        state.editingTxId = null; state.editingMemberId = null; render();
+      }
+      else if (action === 'toggle-theme') {
+        state.theme = state.theme === 'dark' ? 'light' : 'dark';
+        saveData(); render();
+      }
+      else if (action === 'toggle-form') {
+        if (state.editingTxId) {
+          state.editingTxId = null;
+          state.form = { type: 'income', amount: '', date: todayJalali(), desc: '', memberId: '', status: 'pending' };
+          state.showForm = false;
+        } else {
+          state.showForm = !state.showForm;
+        }
+        state.formError = ''; render();
+      }
+      else if (action === 'set-type') { state.form.type = el.dataset.type; render(); }
+      else if (action === 'set-status') { state.form.status = el.dataset.status; render(); }
+      else if (action === 'toggle-received') {
+        const t = state.transactions.find((x) => x.id === id);
+        if (t) t.status = t.status === 'pending' ? 'received' : 'pending';
+        saveData(); render();
+      }
+      else if (action === 'edit-tx') {
+        const t = state.transactions.find((x) => x.id === id);
+        if (t) {
+          state.form = { type: t.type, amount: String(t.amount), date: t.date, desc: t.desc || '', memberId: t.memberId || '', status: t.status || 'pending' };
+          state.editingTxId = id;
+          state.showForm = true;
+          state.formError = '';
+        }
+        render();
+      }
+      else if (action === 'edit-member') {
+        const m = state.members.find((x) => x.id === id);
+        if (m) { state.editingMemberId = id; state.editMemberName = m.name; state.editMemberShare = String(m.sharePercent || 0); state.memberError = ''; }
+        render();
+      }
+      else if (action === 'cancel-edit-member') { state.editingMemberId = null; state.editMemberName = ''; state.editMemberShare = ''; state.memberError = ''; render(); }
+      else if (action === 'save-edit-member') {
+        const name = state.editMemberName.trim();
+        if (!name) { state.memberError = 'نام عضو را وارد کنید.'; render(); return; }
+        if (state.members.some((m) => m.name === name && m.id !== id)) { state.memberError = 'عضوی با این نام قبلاً اضافه شده است.'; render(); return; }
+        const share = clampPercent(sanitizePercent(state.editMemberShare) || 0);
+        const m = state.members.find((x) => x.id === id);
+        if (m) { m.name = name; m.sharePercent = share; }
+        state.editingMemberId = null; state.editMemberName = ''; state.editMemberShare = ''; state.memberError = '';
+        saveData(); render();
+      }
+      else if (action === 'confirm-delete-tx' || action === 'confirm-delete-member') { state.confirmDeleteId = id; render(); }
+      else if (action === 'cancel-delete') { state.confirmDeleteId = null; render(); }
+      else if (action === 'remove-tx') {
+        state.transactions = state.transactions.filter((t) => t.id !== id);
+        state.confirmDeleteId = null;
+        if (state.editingTxId === id) { state.editingTxId = null; state.showForm = false; }
+        saveData(); render();
+      }
+      else if (action === 'remove-member') {
+        state.members = state.members.filter((m) => m.id !== id);
+        state.transactions = state.transactions.filter((t) => t.memberId !== id);
+        state.confirmDeleteId = null;
+        if (state.editingMemberId === id) { state.editingMemberId = null; state.editMemberName = ''; }
+        saveData(); render();
+      }
+    });
+  });
+
+  // text/number inputs: update state without full re-render (preserve focus)
+  app.querySelectorAll('input[data-field]').forEach((el) => {
+    el.addEventListener('input', () => {
+      const field = el.dataset.field;
+      if (field === 'amount') {
+        const clean = sanitizeAmount(el.value);
+        state.form.amount = clean;
+        if (el.value !== clean) el.value = clean;
+      } else if (field === 'desc') {
+        state.form.desc = el.value;
+      }
+    });
+  });
+  const newMemberInput = document.getElementById('new-member-input');
+  if (newMemberInput) {
+    newMemberInput.addEventListener('input', () => { state.newMemberName = newMemberInput.value; });
+  }
+  const newMemberShareInput = document.getElementById('new-member-share');
+  if (newMemberShareInput) {
+    newMemberShareInput.addEventListener('input', () => {
+      const clean = sanitizePercent(newMemberShareInput.value);
+      state.newMemberShare = clean;
+      if (newMemberShareInput.value !== clean) newMemberShareInput.value = clean;
+    });
+  }
+  const editMemberInput = document.getElementById('edit-member-input');
+  if (editMemberInput) {
+    editMemberInput.addEventListener('input', () => { state.editMemberName = editMemberInput.value; });
+  }
+  const editMemberShareInput = document.getElementById('edit-member-share');
+  if (editMemberShareInput) {
+    editMemberShareInput.addEventListener('input', () => {
+      const clean = sanitizePercent(editMemberShareInput.value);
+      state.editMemberShare = clean;
+      if (editMemberShareInput.value !== clean) editMemberShareInput.value = clean;
+    });
+  }
+
+  // selects: date + member
+  app.querySelectorAll('select[data-field]').forEach((el) => {
+    el.addEventListener('change', () => {
+      const field = el.dataset.field;
+      if (field === 'memberId') { state.form.memberId = el.value; return; }
+      let [jy, jm, jd] = state.form.date;
+      if (field === 'date-day') jd = Number(el.value);
+      if (field === 'date-month') { jm = Number(el.value); jd = Math.min(jd, jalaliMonthLength(jy, jm)); }
+      if (field === 'date-year') { jy = Number(el.value); jd = Math.min(jd, jalaliMonthLength(jy, jm)); }
+      state.form.date = [jy, jm, jd];
+      render();
+    });
+  });
+
+  const txForm = document.getElementById('tx-form');
+  if (txForm) {
+    txForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const amount = Number(sanitizeAmount(state.form.amount));
+      if (!amount || amount <= 0) {
+        state.formError = 'مبلغ را وارد کنید (باید بزرگ‌تر از صفر باشد).';
+        render();
+        return;
+      }
+      if (state.form.type === 'withdrawal' && !state.form.memberId) {
+        state.formError = 'یک عضو را برای برداشت انتخاب کنید.';
+        render();
+        return;
+      }
+      const payload = {
+        type: state.form.type,
+        amount,
+        date: state.form.date,
+        desc: state.form.desc.trim(),
+        memberId: state.form.type === 'withdrawal' ? state.form.memberId : null,
+        status: state.form.type === 'expected_income' ? state.form.status : null,
+      };
+      if (state.editingTxId) {
+        const idx = state.transactions.findIndex((t) => t.id === state.editingTxId);
+        if (idx !== -1) state.transactions[idx] = { ...state.transactions[idx], ...payload };
+      } else {
+        state.transactions.push({ id: 'tx-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8), ...payload });
+      }
+      state.form = { type: state.form.type, amount: '', date: state.form.date, desc: '', memberId: '', status: 'pending' };
+      state.formError = '';
+      state.showForm = false;
+      state.editingTxId = null;
+      saveData(); render();
+    });
+  }
+
+  const memberForm = document.getElementById('member-form');
+  if (memberForm) {
+    memberForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = state.newMemberName.trim();
+      if (!name) {
+        state.memberError = 'نام عضو را وارد کنید.';
+        render();
+        return;
+      }
+      if (state.members.some((m) => m.name === name)) {
+        state.memberError = 'عضوی با این نام قبلاً اضافه شده است.';
+        render();
+        return;
+      }
+      const shareRaw = sanitizePercent(state.newMemberShare);
+      const share = shareRaw === '' ? clampPercent(100 / (state.members.length + 1)) : clampPercent(shareRaw);
+      state.members.push({ id: 'm-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8), name, sharePercent: share });
+      state.newMemberName = '';
+      state.newMemberShare = '';
+      state.memberError = '';
+      saveData(); render();
+    });
+  }
+}
+
+/* ---------------- Init ---------------- */
+loadData();
+render();
+</script>
+</body>
+</html>
